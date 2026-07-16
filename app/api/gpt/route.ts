@@ -88,7 +88,7 @@ export async function POST(req: Request) {
         try {
             const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
             parsedData = JSON.parse(cleanJson);
-        } catch (err) {
+        } catch (_err) {
             return NextResponse.json(
                 { success: false, error: "AI response format was invalid. Please try again." },
                 { status: 500 }

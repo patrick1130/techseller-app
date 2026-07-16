@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import apiClient from "@/libs/api"; // 👈 引入我们配置好的超级客户端
 
 export default function TechSellerTool() {
