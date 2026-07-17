@@ -27,6 +27,7 @@ export const sendOpenAi = async (
     // model: "deepseek/deepseek-chat",
     messages,
     max_tokens: max,
+    response_format: { type: "json_object" },
     temperature: temp,
     user: String(userId),
   };

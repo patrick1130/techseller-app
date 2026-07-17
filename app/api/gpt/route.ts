@@ -86,9 +86,25 @@ export async function POST(req: Request) {
 
         let parsedData;
         try {
-            const cleanJson = aiResponse.replace(/```json/g, "").replace(/```/g, "").trim();
+            // 1. 基础清理：去掉 markdown 标记（加了 i 忽略大小写，防范 ```JSON）
+            let cleanJson = aiResponse.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+            // 2. 终极截取：精准定位第一个 { 和最后一个 }
+            const firstBrace = cleanJson.indexOf('{');
+            const lastBrace = cleanJson.lastIndexOf('}');
+
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                // 只保留 { 到 } 之间的内容，彻底抛弃前后的废话
+                cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+            }
+
+            // 3. 安全解析
             parsedData = JSON.parse(cleanJson);
-        } catch (_err) {
+
+        } catch (err) {
+            // 💡 强烈建议加上这行打印日志：如果再报错，你去 Vercel 日志里看一眼就知道 AI 到底吐出了什么奇葩格式
+            console.error("🚨 JSON Parsing Failed! Raw AI Response was:\n", aiResponse);
+
             return NextResponse.json(
                 { success: false, error: "AI response format was invalid. Please try again." },
                 { status: 500 }
