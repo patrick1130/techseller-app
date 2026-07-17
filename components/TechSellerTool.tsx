@@ -94,8 +94,10 @@ export default function TechSellerTool() {
                             ) : (
                                 <div className="bg-base-100 p-3 rounded-lg border border-base-300">
                                     <span className="mr-2">{item.emoji || "✨"}</span>
-                                    <strong className="text-primary">{item.title || item.question || ""}</strong>
-                                    <p className="mt-1 text-base-content/80 text-xs">{item.description || item.answer || JSON.stringify(item)}</p>
+                                    {/* 💡 核心修复：增加了 item.Q 的兼容 */}
+                                    <strong className="text-primary">{item.title || item.question || item.Q || ""}</strong>
+                                    {/* 💡 核心修复：增加了 item.A 的兼容 */}
+                                    <p className="mt-1 text-base-content/80 text-xs">{item.description || item.answer || item.A || JSON.stringify(item)}</p>
                                 </div>
                             )}
                         </li>
@@ -108,8 +110,9 @@ export default function TechSellerTool() {
             return (
                 <div className="bg-base-100 p-3 rounded-lg border border-base-300">
                     <span className="mr-2">{content.emoji || "✨"}</span>
-                    <strong className="text-primary">{content.title || content.question || ""}</strong>
-                    <p className="mt-1 text-base-content/80 text-xs">{content.description || content.answer || JSON.stringify(content)}</p>
+                    {/* 💡 同样增加 Q 和 A 的兼容 */}
+                    <strong className="text-primary">{content.title || content.question || content.Q || ""}</strong>
+                    <p className="mt-1 text-base-content/80 text-xs">{content.description || content.answer || content.A || JSON.stringify(content)}</p>
                 </div>
             );
         }
