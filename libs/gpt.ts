@@ -22,9 +22,9 @@ export const sendOpenAi = async (
   );
 
   const body = {
-    model: "meta-llama/llama-3.1-70b-instruct"
+    model: "meta-llama/llama-3.1-70b-instruct",
     // 或者
-    // model: "deepseek/deepseek-chat"
+    // model: "deepseek/deepseek-chat",
     messages,
     max_tokens: max,
     temperature: temp,
