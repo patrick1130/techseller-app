@@ -3,7 +3,7 @@ import axios from 'axios';
 export const sendOpenAi = async (
   messages: any[],
   userId: number | string,
-  max = 1500, // 放大 Token 限制以适应长文案
+  max = 3000, // 放大 Token 限制以适应长文案
   temp = 0.7
 ) => {
 
@@ -16,10 +16,10 @@ export const sendOpenAi = async (
   console.log('📡 Spawning GPT Request on:', url);
 
   const body = {
-    model: "meta-llama/llama-3.1-8b-instruct", // 稳定极速的 8B 模型
+    model: "meta-llama/llama-3.1-70b-instruct",
     messages,
     max_tokens: max,
-    response_format: { type: "json_object" }, // 强制 JSON 输出
+    response_format: { type: "json_object" },
     temperature: temp,
     user: String(userId),
   };

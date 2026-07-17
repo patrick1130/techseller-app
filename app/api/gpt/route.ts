@@ -76,7 +76,7 @@ export async function POST(req: Request) {
                 { role: "user", content: systemPrompt }
             ],
             1,
-            1500,
+            3000,
             0.7
         );
 
