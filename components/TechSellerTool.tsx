@@ -36,6 +36,10 @@ export default function TechSellerTool() {
     // 2. 生成文案 (使用 apiClient 重构)
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 🛑 防抖锁核心：如果当前正在生成中，直接拦截本次点击，彻底切断幽灵并发请求
+        if (isLoading) return;
+
         if (!formData.productName.trim() || !formData.specs.trim()) {
             alert("Please fill in both Product Name and Core Specs!");
             return;
