@@ -22,7 +22,9 @@ export const sendOpenAi = async (
   );
 
   const body = {
-    model: 'google/gemini-2.5-flash', // OpenRouter 上的极速且便宜的优秀模型
+    model: "meta-llama/llama-3.1-70b-instruct"
+    // 或者
+    // model: "deepseek/deepseek-chat"
     messages,
     max_tokens: max,
     temperature: temp,
