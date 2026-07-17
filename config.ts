@@ -14,7 +14,7 @@ const config = {
   appDescription:
     "The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
   // REQUIRED (no https://, not trailing slash at the end, just the naked domain)
-  domainName: "shipfa.st",
+  domainName: "https://techseller.pritihk.tech/api/webhook/stripe",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
@@ -50,8 +50,8 @@ const config = {
       {
         priceId:
           process.env.NODE_ENV === "development"
-            ? "price_1O5KtcAxyNprDp7iftKnrrpw"
-            : "price_456",
+            ? "prod_Utgt8fan3MSXzP"
+            : "prod_Utgt8fan3MSXzP",
         // This plan will look different on the pricing page, it will be highlighted. You can only have one plan with isFeatured: true
         isFeatured: true,
         name: "Advanced",
