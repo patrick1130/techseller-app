@@ -1,4 +1,5 @@
-import { getServerSession } from "next-auth/next";
+// @ts-ignore
+import { getServerSession } from "next-auth"; // 👈 关键点：去掉后面的 /next
 import { authOptions } from "@/libs/next-auth";
 import { redirect } from "next/navigation";
 import connectMongo from "@/libs/mongoose";
