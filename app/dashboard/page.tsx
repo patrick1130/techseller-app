@@ -1,8 +1,8 @@
 // @ts-ignore
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/libs/next-auth";
 import { redirect } from "next/navigation";
-import connectMongo from "@/libs/mongoose"; // 👈 改成了 mongoose
+import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 
 import ButtonAccount from "@/components/ButtonAccount";
