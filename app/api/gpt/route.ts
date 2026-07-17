@@ -65,7 +65,13 @@ export async function POST(req: Request) {
     {
       "hook": "1 short, high-impact emotional hook / pain-point introduction. (50-80 words)",
       "bullets": "5 high-converting, scenario-based Bullet Points. Format: '[Emoji] [BOLD CAPITAL KEYWORD]: Description'.",
-      "faq": "3 highly professional, conversion-boosting FAQs in Q&A format.",
+      "faq": [
+        {
+          "question": "1st professional FAQ question here",
+          "answer": "1st professional conversion-boosting answer here"
+        }
+    ],
+
       "socialPost": "A highly organic, natural-sounding review/recommendation post suitable for Reddit. (150-200 words)"
     }
     `;

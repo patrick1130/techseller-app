@@ -84,35 +84,60 @@ export default function TechSellerTool() {
             return <p className="text-sm text-base-content/90 whitespace-pre-wrap leading-relaxed">{content}</p>;
         }
 
+        // 💡 核心武器：终极属性提取器（无视任何奇葩键名）
+        const extractTitleAndDesc = (obj: any) => {
+            // 1. 先尝试命中常规键名
+            let title = obj.title || obj.question || obj.Q || obj.q || obj.header || obj.ask || "";
+            let desc = obj.description || obj.answer || obj.A || obj.a || obj.body || obj.reply || "";
+
+            // 2. 如果都没命中，暴力抓取对象里的前两个值！
+            if (!title && !desc) {
+                const values = Object.values(obj);
+                if (values.length >= 2) {
+                    title = String(values[0]); // 第一个值强制当标题
+                    desc = String(values[1]);  // 第二个值强制当正文
+                } else if (values.length === 1) {
+                    desc = String(values[0]);
+                }
+            }
+            return { title, desc, emoji: obj.emoji || "✨" };
+        };
+
         if (Array.isArray(content)) {
             return (
                 <ul className="space-y-3">
-                    {content.map((item: any, index: number) => (
-                        <li key={index} className="text-sm text-base-content/90 leading-relaxed">
-                            {typeof item === "string" ? (
-                                item
-                            ) : (
+                    {content.map((item: any, index: number) => {
+                        if (typeof item === "string") {
+                            return <li key={index} className="text-sm text-base-content/90 leading-relaxed">{item}</li>;
+                        }
+
+                        // 使用终极提取器
+                        const { title, desc, emoji } = extractTitleAndDesc(item);
+
+                        return (
+                            <li key={index} className="text-sm text-base-content/90 leading-relaxed">
                                 <div className="bg-base-100 p-3 rounded-lg border border-base-300">
-                                    <span className="mr-2">{item.emoji || "✨"}</span>
-                                    {/* 💡 核心修复：增加了 item.Q 的兼容 */}
-                                    <strong className="text-primary">{item.title || item.question || item.Q || ""}</strong>
-                                    {/* 💡 核心修复：增加了 item.A 的兼容 */}
-                                    <p className="mt-1 text-base-content/80 text-xs">{item.description || item.answer || item.A || JSON.stringify(item)}</p>
+                                    <span className="mr-2">{emoji}</span>
+                                    {title && <strong className="text-primary">{title}</strong>}
+                                    <p className="mt-1 text-base-content/80 text-xs">
+                                        {/* 只有在极端异常时，才会走最后的 JSON.stringify */}
+                                        {desc || JSON.stringify(item)}
+                                    </p>
                                 </div>
-                            )}
-                        </li>
-                    ))}
+                            </li>
+                        );
+                    })}
                 </ul>
             );
         }
 
         if (typeof content === "object") {
+            const { title, desc, emoji } = extractTitleAndDesc(content);
             return (
                 <div className="bg-base-100 p-3 rounded-lg border border-base-300">
-                    <span className="mr-2">{content.emoji || "✨"}</span>
-                    {/* 💡 同样增加 Q 和 A 的兼容 */}
-                    <strong className="text-primary">{content.title || content.question || content.Q || ""}</strong>
-                    <p className="mt-1 text-base-content/80 text-xs">{content.description || content.answer || content.A || JSON.stringify(content)}</p>
+                    <span className="mr-2">{emoji}</span>
+                    {title && <strong className="text-primary">{title}</strong>}
+                    <p className="mt-1 text-base-content/80 text-xs">{desc || JSON.stringify(content)}</p>
                 </div>
             );
         }
