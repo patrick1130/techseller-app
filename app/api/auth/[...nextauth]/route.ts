@@ -1,10 +1,7 @@
-//import { handlers } from "@/libs/next-auth";
+import NextAuth from "next-auth";
+import { authOptions } from "@/libs/next-auth";
 
-//export const { GET, POST } = handlers;
+// 同样使用 as any 绕过可能存在的类型定义版本冲突
+const handler = NextAuth(authOptions as any);
 
-
-// app/api/auth/[...nextauth]/route.ts
-import { handlers } from "@/libs/next-auth";
-
-// 确保正确解构出 GET 和 POST 并导出
-export const { GET, POST } = handlers;
+export { handler as GET, handler as POST };
