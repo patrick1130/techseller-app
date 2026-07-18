@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function AppSumoRedeem() {
-    const { data: session, status } = useSession();
+    // 修复 1: 移除了未使用的 data: session
+    const { status } = useSession();
     const router = useRouter();
 
     const [code, setCode] = useState("");
@@ -15,14 +16,13 @@ export default function AppSumoRedeem() {
         message: "",
     });
 
-    const handleRedeem = async (e: React.FormEvent) => {
+    // 修复 2: 直接使用 FormEvent，而不是 React.FormEvent
+    const handleRedeem = async (e: FormEvent) => {
         e.preventDefault();
         if (!code.trim()) return;
 
-        // 未登录拦截
         if (status === "unauthenticated") {
             setFeedback({ type: "error", message: "Please log in first to redeem your code." });
-            // 延迟跳转到登录页 (假设你的登录页是 /login 或 api/auth/signin)
             setTimeout(() => router.push("/api/auth/signin?callbackUrl=/appsumo"), 2000);
             return;
         }
@@ -45,12 +45,13 @@ export default function AppSumoRedeem() {
                     message: `🎉 Success! Upgraded to ${data.data.plan.replace('_', ' ').toUpperCase()} with ${data.data.credits} credits/month.`
                 });
                 setCode("");
-                // 成功后自动跳转到核心工具页 (假设路径为 /dashboard 或 /)
                 setTimeout(() => router.push("/"), 3000);
             } else {
                 setFeedback({ type: "error", message: data.error || "Failed to redeem code." });
             }
         } catch (error) {
+            // 修复 3: 使用了 error 变量，防止 unused-vars 报错
+            console.error("Redemption network error:", error);
             setFeedback({ type: "error", message: "Network error. Please try again." });
         } finally {
             setIsLoading(false);
