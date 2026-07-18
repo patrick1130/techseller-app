@@ -16,7 +16,8 @@ export const sendOpenAi = async (
   console.log('📡 Spawning GPT Request on:', url);
 
   const body = {
-    model: "openai/gpt-4o-mini,meta-llama/llama-3.1-8b-instruct,deepseek/deepseek-chat",
+    // 👈 核心修改：移除降级模型，严格指定 GPT-4o-mini，确保 JSON 模式 100% 兼容
+    model: "openai/gpt-4o-mini",
     messages,
     max_tokens: max,
     response_format: { type: "json_object" },
