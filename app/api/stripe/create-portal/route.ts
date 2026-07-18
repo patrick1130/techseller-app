@@ -3,7 +3,7 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import { createCustomerPortal } from "@/libs/stripe";
 import User from "@/models/User";
-
+const UserModel = User as any;
 export async function POST(req: NextRequest) {
   const session = await auth();
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
       const { id } = session.user;
 
-      const user = id ? await User.findById(String(id)) : null;
+      const user = id ? await UserModel.findById(String(id)) : null;
 
       if (!user?.customerId) {
         return NextResponse.json(
