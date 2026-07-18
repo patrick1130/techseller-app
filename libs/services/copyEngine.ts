@@ -6,9 +6,11 @@ interface CopyEngineParams {
   audience?: string;
   tone?: string;
   userId?: string;
-  isPremium?: boolean;        // 👈 接收路由层下发的权限状态
-  planType?: string;          // 👈 接收具体的套餐类型
-  userApiKey?: string | null; // 👈 接收用户自带的 API Key
+  isPremium?: boolean;
+  planType?: string;
+  userApiKey?: string | null;
+  includeFaq?: boolean;      // 👈 新增：接收前端传来的 FAQ 开关
+  includeReddit?: boolean;   // 👈 新增：接收前端传来的 Reddit 开关
 }
 
 export async function generateMarketingCopy(params: CopyEngineParams) {
@@ -19,13 +21,14 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
     tone = "Professional and persuasive",
     userId = "system-engine",
     isPremium = false,
-    userApiKey = null
+    userApiKey = null,
+    includeFaq = false,      // 👈 设置默认值
+    includeReddit = false    // 👈 设置默认值
   } = params;
 
-  // ================= [ 解决过度承诺 1：动态裁剪生成范围 ] =================
-  // 免费版仅生成基础框架，高级版生成全套矩阵（包含 FAQ 和 Reddit 帖子）
-  const requiredStructure = isPremium
-    ? `{
+  // ================= [ 解决过度承诺 1：基于前端 Payload 动态裁剪生成范围 ] =================
+  // 基础结构：无论是免费版还是高级版，Hook 和 Bullets 都是必选项
+  let requiredStructure = `{
       "hook": "1 short, high-impact emotional hook / pain-point introduction. (50-80 words)",
       "bullets": [
         "🚀 **[KEYWORD 1]**: 1st high-converting, scenario-based bullet point description",
@@ -33,23 +36,27 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
         "⚡ **[KEYWORD 3]**: 3rd bullet point...",
         "💡 **[KEYWORD 4]**: 4th bullet point...",
         "💼 **[KEYWORD 5]**: 5th bullet point..."
-      ],
+      ]`;
+
+  // 动态注入 FAQ 模块（仅在前端明确开启时）
+  if (includeFaq) {
+    requiredStructure += `,
       "faq": [
         {
           "question": "1st professional FAQ question here",
           "answer": "1st professional conversion-boosting answer here"
         }
-      ],
-      "socialPost": "A highly organic, natural-sounding review/recommendation post suitable for Reddit. (150-200 words)"
-    }`
-    : `{
-      "hook": "1 short, high-impact emotional hook / pain-point introduction. (50-80 words)",
-      "bullets": [
-        "🚀 **[KEYWORD 1]**: 1st high-converting, scenario-based bullet point description",
-        "🛡️ **[KEYWORD 2]**: 2nd bullet point...",
-        "⚡ **[KEYWORD 3]**: 3rd bullet point..."
-      ]
-    }`;
+      ]`;
+  }
+
+  // 动态注入 Reddit 帖子模块（仅在前端明确开启时）
+  if (includeReddit) {
+    requiredStructure += `,
+      "socialPost": "A highly organic, natural-sounding review/recommendation post suitable for Reddit. (150-200 words)"`;
+  }
+
+  // 闭合 JSON 对象
+  requiredStructure += `\n    }`;
 
   const systemPrompt = `
     You are an elite e-commerce copywriting expert with 10 years of experience writing high-converting listings for platforms like Amazon, Temu, and Shopify in the North American market.
@@ -74,7 +81,6 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
   const selectedModel = isPremium ? "gpt-4o" : "gpt-4o-mini";
   const maxTokens = isPremium ? 3000 : 1000;
 
-  // 👈 核心修改：将选定的模型和用户的 Key 透传给底层请求器
   const aiResponse = await sendOpenAi(
     [
       { role: "system", content: "You are an expert e-commerce copywriter. You must always reply in strict, valid JSON format in English." },
@@ -83,8 +89,8 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
     userId,
     maxTokens,
     0.7,
-    selectedModel, // 新增参数：动态模型
-    userApiKey     // 新增参数：用户私有 API Key
+    selectedModel,
+    userApiKey
   );
 
   if (!aiResponse) {

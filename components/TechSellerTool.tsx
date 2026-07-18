@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation"; // 👈 新增引入路由
+import { useRouter } from "next/navigation";
 import apiClient from "@/libs/api";
 
 export default function TechSellerTool() {
-    const router = useRouter(); // 👈 初始化 router
+    const router = useRouter();
 
     const [formData, setFormData] = useState({
         productName: "",
@@ -14,11 +14,13 @@ export default function TechSellerTool() {
         tone: "Professional & Persuasive",
     });
 
+    // ================= [ 💡 新增：高级功能状态 ] =================
+    const [includePremiumAsset, setIncludePremiumAsset] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [historyList, setHistoryList] = useState<any[]>([]);
 
-    // ================= [ 💡 新增：额度状态 ] =================
     const [credits, setCredits] = useState<number | null>(null);
     const [planType, setPlanType] = useState<string>("free");
 
@@ -36,7 +38,7 @@ export default function TechSellerTool() {
         }
     };
 
-    // ================= [ 💡 新增：拉取当前用户的额度 ] =================
+    // 拉取当前用户的额度与套餐状态
     const fetchCredits = async () => {
         try {
             const res = await fetch("/api/user/credits");
@@ -52,7 +54,7 @@ export default function TechSellerTool() {
 
     useEffect(() => {
         fetchHistory();
-        fetchCredits(); // 页面加载时拉取额度
+        fetchCredits();
     }, []);
 
     // 监听 result 变化，自动平滑滚动到结果面板
@@ -79,15 +81,20 @@ export default function TechSellerTool() {
         setResult(null);
 
         try {
-            const data = (await apiClient.post("/gpt", formData)) as any;
+            // ================= [ 💡 核心修改：组装带有高级选项的 payload ] =================
+            const payload = {
+                ...formData,
+                includeFaq: includePremiumAsset,
+                includeReddit: includePremiumAsset
+            };
+
+            const data = (await apiClient.post("/gpt", payload)) as any;
 
             if (data.success) {
                 setResult(data.data);
                 fetchHistory();
-                // ================= [ 💡 新增：生成成功后，前端数字自动扣减，体验极致顺滑 ] =================
                 setCredits((prev) => (prev !== null ? prev - 1 : null));
             } else {
-                // 如果后端返回额度不足等错误，直接弹出警告
                 alert(data.error || "Generation failed.");
             }
         } catch (err) {
@@ -278,7 +285,41 @@ export default function TechSellerTool() {
                             </select>
                         </div>
 
-                        {/* ================= [ 💡 新增：额度指示器 UI ] ================= */}
+                        {/* ================= [ 💡 新增：高级功能开关 (受权限控制) ] ================= */}
+                        <div className={`form-control rounded-xl border p-4 transition-all duration-300 ${planType !== "free" ? 'border-primary/30 bg-primary/5' : 'border-base-300 bg-base-200/50 grayscale'}`}>
+                            <label className={`label cursor-pointer p-0 justify-start gap-3 ${planType === "free" ? "opacity-60" : ""}`}>
+                                <input
+                                    type="checkbox"
+                                    className="toggle toggle-primary toggle-sm"
+                                    checked={includePremiumAsset}
+                                    onChange={(e) => setIncludePremiumAsset(e.target.checked)}
+                                    disabled={planType === "free"}
+                                />
+                                <span className="label-text font-semibold flex items-center gap-2">
+                                    Generate Full 3C Assets
+                                    {planType === "free" && (
+                                        <span className="badge badge-warning badge-xs uppercase font-bold text-[10px]">Pro</span>
+                                    )}
+                                </span>
+                            </label>
+                            <p className="text-xs text-base-content/50 mt-1.5 ml-11">
+                                Includes FAQ section and an organic Reddit post.
+                            </p>
+
+                            {planType === "free" && (
+                                <div className="ml-11 mt-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push("/#pricing")}
+                                        className="text-xs font-bold text-primary hover:underline"
+                                    >
+                                        Upgrade to unlock →
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        {/* ========================================================================= */}
+
                         {credits !== null && (
                             <div className="mt-4 flex items-center justify-between bg-base-100 border border-base-300 rounded-xl p-3 shadow-sm">
                                 <div className="flex items-center gap-2">
@@ -302,11 +343,9 @@ export default function TechSellerTool() {
                                 )}
                             </div>
                         )}
-                        {/* ========================================================= */}
 
                         <button
                             type="submit"
-                            // 💡 新增防呆：如果没有额度了，强行禁用按钮，防止白白发起请求
                             disabled={isLoading || (credits !== null && credits <= 0)}
                             className="btn btn-primary w-full mt-2 rounded-xl border-none shadow-[0_4px_12px_transparent] hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 text-white font-bold text-lg h-14 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -349,41 +388,51 @@ export default function TechSellerTool() {
 
                     {result && !isLoading && (
                         <div className="space-y-6 animate-fadeIn">
+                            {/* 💡 这里我加入了条件渲染 {result.hook && (...)} 确保没有数据时不会渲染空盒子 */}
+
                             {/* 1. Hook */}
-                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-bold text-sm tracking-tight text-primary">📍 Pain-Point Intro (Hook)</h3>
-                                    <button onClick={() => copyToClipboard(result.hook)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                            {result.hook && (
+                                <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-bold text-sm tracking-tight text-primary">📍 Pain-Point Intro (Hook)</h3>
+                                        <button onClick={() => copyToClipboard(result.hook)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                    </div>
+                                    {renderContent(result.hook)}
                                 </div>
-                                {renderContent(result.hook)}
-                            </div>
+                            )}
 
                             {/* 2. Bullets */}
-                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-bold text-sm tracking-tight text-primary">🎯 Amazon / Temu Listing Style (Bullet Points)</h3>
-                                    <button onClick={() => copyToClipboard(result.bullets)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                            {result.bullets && (
+                                <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-bold text-sm tracking-tight text-primary">🎯 Amazon / Temu Listing Style (Bullet Points)</h3>
+                                        <button onClick={() => copyToClipboard(result.bullets)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                    </div>
+                                    {renderContent(result.bullets)}
                                 </div>
-                                {renderContent(result.bullets)}
-                            </div>
+                            )}
 
                             {/* 3. FAQ */}
-                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-bold text-sm tracking-tight text-primary">💬 Conversion-Boosting FAQs</h3>
-                                    <button onClick={() => copyToClipboard(result.faq)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                            {result.faq && (
+                                <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-bold text-sm tracking-tight text-primary">💬 Conversion-Boosting FAQs</h3>
+                                        <button onClick={() => copyToClipboard(result.faq)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                    </div>
+                                    {renderContent(result.faq)}
                                 </div>
-                                {renderContent(result.faq)}
-                            </div>
+                            )}
 
                             {/* 4. Reddit */}
-                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
-                                <div className="flex justify-between items-center mb-3">
-                                    <h3 className="font-bold text-sm tracking-tight text-primary">🔥 Reddit / Forum Seed Copy (Social Post)</h3>
-                                    <button onClick={() => copyToClipboard(result.socialPost)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                            {result.socialPost && (
+                                <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="font-bold text-sm tracking-tight text-primary">🔥 Reddit / Forum Seed Copy (Social Post)</h3>
+                                        <button onClick={() => copyToClipboard(result.socialPost)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+                                    </div>
+                                    {renderContent(result.socialPost)}
                                 </div>
-                                {renderContent(result.socialPost)}
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>
