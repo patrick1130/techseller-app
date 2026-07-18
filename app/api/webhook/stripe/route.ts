@@ -78,32 +78,30 @@ export async function POST(req: NextRequest) {
           throw new Error("No user found");
         }
 
-        // Update user data + Grant user access to your product. It's a boolean in the database, but could be a number of credits, etc...
+        // Update user data + Grant user access to your product.
         user.priceId = priceId;
         user.customerId = customerId;
-        user.hasAccess = true;
+        user.hasAccess = true; // 保留向下兼容
+
+        // ================= [ 新增：首次付款充值逻辑 ] =================
+        const STRIPE_MONTHLY_CREDITS = 1000;
+        user.planType = "stripe_monthly";
+        user.credits = STRIPE_MONTHLY_CREDITS;
+        user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+        user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        // ========================================================
+
         await user.save();
 
         // Extra: send email with user link, product page, etc...
-        // try {
-        //   await sendEmail(...);
-        // } catch (e) {
-        //   console.error("Email issue:" + e?.message);
-        // }
-
         break;
       }
 
       case "checkout.session.expired": {
-        // User didn't complete the transaction
-        // You don't need to do anything here, but you can send an email to the user to remind them to complete the transaction, for instance
         break;
       }
 
       case "customer.subscription.updated": {
-        // The customer might have changed the plan (higher or lower plan, cancel soon etc...)
-        // You don't need to do anything here, because Stripe will let us know when the subscription is canceled for good (at the end of the billing cycle) in the "customer.subscription.deleted" event
-        // You can update the user data to show a "Subscription ending soon" badge for instance
         break;
       }
 
@@ -118,10 +116,16 @@ export async function POST(req: NextRequest) {
         );
         const user = await UserModel.findOne({ customerId: subscription.customer });
 
-        // Revoke access to your product
-        user.hasAccess = false;
-        await user.save();
-
+        if (user) {
+          // ================= [ 新增：取消订阅降级逻辑 ] =================
+          user.hasAccess = false;
+          user.planType = "free";
+          user.credits = 3;
+          user.monthlyCreditLimit = 3;
+          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await user.save();
+          // =========================================================
+        }
         break;
       }
 
@@ -137,23 +141,24 @@ export async function POST(req: NextRequest) {
 
         const user = await UserModel.findOne({ customerId });
 
-        // Make sure the invoice is for the same plan (priceId) the user subscribed to
-        if (user.priceId !== priceId) break;
+        if (user) {
+          // Make sure the invoice is for the same plan (priceId) the user subscribed to
+          if (user.priceId !== priceId) break;
 
-        // Grant user access to your product. It's a boolean in the database, but could be a number of credits, etc...
-        user.hasAccess = true;
-        await user.save();
-
+          // ================= [ 新增：每月按期续费充值逻辑 ] =================
+          user.hasAccess = true;
+          const STRIPE_MONTHLY_CREDITS = 1000;
+          user.planType = "stripe_monthly";
+          user.credits = STRIPE_MONTHLY_CREDITS;
+          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await user.save();
+          // ============================================================
+        }
         break;
       }
 
       case "invoice.payment_failed":
-        // A payment failed (for instance the customer does not have a valid payment method)
-        // ❌ Revoke access to the product
-        // ⏳ OR wait for the customer to pay (more friendly):
-        //      - Stripe will automatically email the customer (Smart Retries)
-        //      - We will receive a "customer.subscription.deleted" when all retries were made and the subscription has expired
-
         break;
 
       default:
