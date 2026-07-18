@@ -15,19 +15,17 @@ export default function TechSellerTool() {
     const [result, setResult] = useState<any>(null);
     const [historyList, setHistoryList] = useState<any[]>([]);
 
-    // 💡 新增：定义滚动锚点
+    // 💡 定义滚动锚点
     const canvasRef = useRef<HTMLDivElement>(null);
 
-    // 1. 初始化拉取历史记录 (使用 apiClient 重构)
+    // 1. 初始化拉取历史记录 
     const fetchHistory = async () => {
         try {
-            // apiClient 会自动解析 JSON，并处理掉所有的 401/500 错误
             const data = (await apiClient.get("/history")) as any;
             if (data.success) {
                 setHistoryList(data.data);
             }
         } catch (err) {
-            // 错误已经在 apiClient 拦截器里用 toast 报过了，这里只需静默处理或记录日志
             console.error("Failed to load history:", err);
         }
     };
@@ -36,21 +34,19 @@ export default function TechSellerTool() {
         fetchHistory();
     }, []);
 
-    // 💡 新增：监听 result 变化，自动平滑滚动到结果面板
+    // 💡 监听 result 变化，自动平滑滚动到结果面板
     useEffect(() => {
         if (result && canvasRef.current) {
-            // 给一个小延迟，确保 DOM 已经完全渲染并展开
             setTimeout(() => {
                 canvasRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
             }, 100);
         }
     }, [result]);
 
-    // 2. 生成文案 (使用 apiClient 重构)
+    // 2. 生成文案 
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // 🛑 防抖锁核心：如果当前正在生成中，直接拦截本次点击，彻底切断幽灵并发请求
         if (isLoading) return;
 
         if (!formData.productName.trim() || !formData.specs.trim()) {
@@ -62,24 +58,20 @@ export default function TechSellerTool() {
         setResult(null);
 
         try {
-            // apiClient 自动设置 Content-Type，自动 stringify body，代码极简！
             const data = (await apiClient.post("/gpt", formData)) as any;
 
             if (data.success) {
                 setResult(data.data);
-                // 生成成功后，重新拉取最新历史记录
                 fetchHistory();
             }
         } catch (err) {
-            // 不需要再写 alert，apiClient 已经用漂亮地 Toast 弹出错误了！
             console.error("Generation logic failed", err);
         } finally {
             setIsLoading(false);
         }
     };
 
-
-    // 点击历史记录卡片：加载历史文案到画布中
+    // 3. 点击历史记录卡片：加载历史文案到画布中
     const loadHistoryItem = (item: any) => {
         setFormData({
             productName: item.productName,
@@ -89,9 +81,27 @@ export default function TechSellerTool() {
         });
         setResult(item.result);
 
-        // 💡 新增：点击历史记录后，也自动滚回结果区
         if (canvasRef.current) {
             canvasRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
+    // 💡 新增：4. 删除单条历史记录
+    const handleDeleteHistory = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation(); // 🛡️ 核心防御：阻止事件冒泡，防止触发外层的 loadHistoryItem
+
+        const isConfirmed = window.confirm("Are you sure you want to delete this record?");
+        if (!isConfirmed) return;
+
+        try {
+            // 调用后端的 DELETE 接口
+            const data = (await apiClient.delete(`/history?id=${id}`)) as any;
+            if (data?.success) {
+                // 删除成功后，无感刷新本地状态，不需要重新请求整个列表
+                setHistoryList((prev) => prev.filter((item) => item._id !== id));
+            }
+        } catch (err) {
+            console.error("Failed to delete history:", err);
         }
     };
 
@@ -102,18 +112,15 @@ export default function TechSellerTool() {
             return <p className="text-sm text-base-content/90 whitespace-pre-wrap leading-relaxed">{content}</p>;
         }
 
-        // 💡 核心武器：终极属性提取器（无视任何奇葩键名）
         const extractTitleAndDesc = (obj: any) => {
-            // 1. 先尝试命中常规键名
             let title = obj.title || obj.question || obj.Q || obj.q || obj.header || obj.ask || "";
             let desc = obj.description || obj.answer || obj.A || obj.a || obj.body || obj.reply || "";
 
-            // 2. 如果都没命中，暴力抓取对象里的前两个值！
             if (!title && !desc) {
                 const values = Object.values(obj);
                 if (values.length >= 2) {
-                    title = String(values[0]); // 第一个值强制当标题
-                    desc = String(values[1]);  // 第二个值强制当正文
+                    title = String(values[0]);
+                    desc = String(values[1]);
                 } else if (values.length === 1) {
                     desc = String(values[0]);
                 }
@@ -129,7 +136,6 @@ export default function TechSellerTool() {
                             return <li key={index} className="text-sm text-base-content/90 leading-relaxed">{item}</li>;
                         }
 
-                        // 使用终极提取器
                         const { title, desc, emoji } = extractTitleAndDesc(item);
 
                         return (
@@ -138,7 +144,6 @@ export default function TechSellerTool() {
                                     <span className="mr-2">{emoji}</span>
                                     {title && <strong className="text-primary">{title}</strong>}
                                     <p className="mt-2 text-base-content/80 text-xs leading-relaxed">
-                                        {/* 只有在极端异常时，才会走最后的 JSON.stringify */}
                                         {desc || JSON.stringify(item)}
                                     </p>
                                 </div>
@@ -264,7 +269,6 @@ export default function TechSellerTool() {
                 </div>
 
                 {/* 👉 Right Panel: Output Canvas */}
-                {/* 💡 新增：加入 ref 绑定和 scroll-mt-8 预留顶部间距 */}
                 <div
                     ref={canvasRef}
                     className="scroll-mt-8 lg:col-span-7 bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[500px] flex flex-col"
@@ -350,9 +354,19 @@ export default function TechSellerTool() {
                             >
                                 <div>
                                     <div className="flex justify-between items-start mb-2">
-                                        <h3 className="font-bold text-sm text-base-content line-clamp-1 group-hover:text-primary transition-colors">
+                                        <h3 className="font-bold text-sm text-base-content line-clamp-1 group-hover:text-primary transition-colors pr-2">
                                             {item.productName}
                                         </h3>
+                                        {/* 💡 新增：删除按钮，使用 opacity-0 控制只在 hover 时显示以保持页面整洁 */}
+                                        <button
+                                            onClick={(e) => handleDeleteHistory(e, item._id)}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-base-content/30 hover:text-error hover:bg-error/10 rounded-lg shrink-0"
+                                            title="Delete record"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </div>
                                     <p className="text-xs text-base-content/60 line-clamp-2 mb-4 leading-relaxed">
                                         {item.specs}
