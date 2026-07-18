@@ -6,6 +6,7 @@ import { auth } from "@/libs/next-auth";
 import { generateMarketingCopy } from "@/libs/services/copyEngine";
 
 const HistoryModel = History as any;
+const UserModel = User as any; // 👈 核心修复：绕过 Next.js HMR 导致的联合类型推导错误
 
 export async function POST(req: Request) {
     try {
@@ -16,7 +17,8 @@ export async function POST(req: Request) {
         }
 
         await connectMongo();
-        const currentUser = await User.findById(session.user.id);
+        // 👈 使用 UserModel 替代直接调用 User
+        const currentUser = await UserModel.findById(session.user.id);
 
         if (!currentUser) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
