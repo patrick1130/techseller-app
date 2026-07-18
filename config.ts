@@ -8,96 +8,79 @@ const themes = {
 };
 
 const config = {
-  // REQUIRED
-  appName: "ShipFast",
-  // REQUIRED: a short description of your app for SEO tags (can be overwritten)
+  appName: "TechSeller AI",
   appDescription:
-    "The NextJS boilerplate with all you need to build your SaaS, AI tool, or any other web app.",
-  // REQUIRED (no https://, not trailing slash at the end, just the naked domain)
+    "High-converting marketing engine for 3C electronics using GaN-powered AI.",
   domainName: "techseller.pritihk.tech",
   crisp: {
-    // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
-    // Hide Crisp by default, except on route "/". Crisp is toggled with <ButtonSupport/>. If you want to show Crisp on every routes, just remove this below
     onlyShowOnRoutes: ["/"],
   },
   stripe: {
-    // Create multiple plans in your Stripe dashboard, then add them here. You can add as many plans as you want, just make sure to add the priceId
     plans: [
       {
-        // REQUIRED — we use this to find the plan in the webhook (for instance if you want to update the user's credits based on the plan)
-        priceId:
-          process.env.NODE_ENV === "development"
-            ? "price_1Tu3BJFzQjhWVsGOvdpLJWy4"
-            : "price_1Tu3BJFzQjhWVsGOvdpLJWy4",
-        //  REQUIRED - Name of the plan, displayed on the pricing page
-        name: "Starter",
-        // A friendly description of the plan, displayed on the pricing page. Tip: explain why this plan and not others
-        description: "Perfect for small projects",
-        // The price you want to display, the one user will be charged on Stripe.
-        price: 99,
-        // If you have an anchor price (i.e. $29) that you want to display crossed out, put it here. Otherwise, leave it empty
-        priceAnchor: 149,
+        priceId: "", // Free plan, no priceId needed
+        name: "Free Starter",
+        description: "Perfect to test the waters",
+        price: 0,
+        priceAnchor: 19,
         features: [
-          {
-            name: "NextJS boilerplate",
-          },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
+          { name: "3 Generations per month" },
+          { name: "Basic Hook & Bullet points" },
+          { name: "Standard processing speed" },
         ],
       },
       {
         priceId:
           process.env.NODE_ENV === "development"
-            ? "prod_Utgt8fan3MSXzP"
-            : "prod_Utgt8fan3MSXzP",
-        // This plan will look different on the pricing page, it will be highlighted. You can only have one plan with isFeatured: true
+            ? "price_1TttW6FzQjhWVsGOgZKTgNNj"
+            : "price_填入你的_线上真实ID",
         isFeatured: true,
-        name: "Advanced",
-        description: "You need more power",
-        price: 149,
-        priceAnchor: 299,
+        name: "Pro Monthly",
+        description: "For e-commerce sellers & marketers",
+        price: 19,
+        priceAnchor: 29,
         features: [
-          {
-            name: "NextJS boilerplate",
-          },
-          { name: "User oauth" },
-          { name: "Database" },
-          { name: "Emails" },
-          { name: "1 year of updates" },
-          { name: "24/7 support" },
+          { name: "250 Generations per month" },
+          { name: "Full 3C Asset Generation (Hooks, Bullets, FAQ, Reddit)" },
+          { name: "High-converting GaN AI engine" },
+          { name: "Priority fast processing" },
+        ],
+      },
+      {
+        priceId:
+          process.env.NODE_ENV === "development"
+            ? "price_1TuToqFzQjhWVsGONYQ8V4Ob"
+            : "price_填入你的_线上真实ID",
+        name: "Lifetime Deal",
+        description: "Pay once. 10x your conversions forever.",
+        price: 59,
+        priceAnchor: 199,
+        features: [
+          { name: "Everything in Pro Monthly" },
+          { name: "Pay once, use forever" },
+          { name: "Early access to new features" },
+          { name: "24/7 Priority support" },
         ],
       },
     ],
   },
   aws: {
-    // If you use AWS S3/Cloudfront, put values in here
     bucket: "bucket-name",
     bucketUrl: `https://bucket-name.s3.amazonaws.com/`,
     cdn: "https://cdn-id.cloudfront.net/",
   },
   resend: {
-    // REQUIRED — Email 'From' field to be used when sending magic login links
-    //fromNoReply: `ShipFast <noreply@resend.shipfa.st>`,
-    fromNoReply: `"ShipFast" <onboarding@resend.dev>`, // 👈 改成 onboarding@resend.dev
-    fromAdmin: `"Marc at ShipFast" <onboarding@resend.dev>`,
-    // REQUIRED — Email 'From' field to be used when sending other emails, like abandoned carts, updates etc..
-    //fromAdmin: `Marc at ShipFast <marc@resend.shipfa.st>`,
-    // Email shown to customer if they need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
+    fromNoReply: `"TechSeller AI" <onboarding@resend.dev>`,
+    fromAdmin: `"Admin at TechSeller" <onboarding@resend.dev>`,
     supportEmail: "marc.louvion@gmail.com",
   },
   colors: {
-    // REQUIRED — The DaisyUI theme to use (added to the main layout.js). Leave blank for default (light & dark mode). If you use any theme other than light/dark, you need to add it in config.tailwind.js in daisyui.themes.
     theme: "light",
-    // REQUIRED — This color will be reflected on the whole app outside of the document (loading bar, Chrome tabs, etc..). By default it takes the primary color from your DaisyUI theme (make sure to update your the theme name after "data-theme=")
-    // OR you can just do this to use a custom color: main: "#f37055". HEX only.
     main: themes["light"]["primary"],
   },
   auth: {
-    // REQUIRED — the path to log in users. It's use to protect private routes (like /dashboard). It's used in apiClient (/libs/api.js) upon 401 errors from our API
     loginUrl: "/api/auth/signin",
-    // REQUIRED — the path you want to redirect users to after a successful login (i.e. /dashboard, /private). This is normally a private page for users to manage their accounts. It's used in apiClient (/libs/api.js) upon 401 errors from our API & in ButtonSignin.js
     callbackUrl: "/dashboard",
   },
 } as ConfigProps;

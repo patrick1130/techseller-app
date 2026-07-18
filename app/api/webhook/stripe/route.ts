@@ -84,11 +84,21 @@ export async function POST(req: NextRequest) {
         user.hasAccess = true; // 保留向下兼容
 
         // ================= [ 新增：首次付款充值逻辑 ] =================
-        const STRIPE_MONTHLY_CREDITS = 1000;
-        user.planType = "stripe_monthly";
-        user.credits = STRIPE_MONTHLY_CREDITS;
-        user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
-        user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const STRIPE_MONTHLY_CREDITS = 250;
+
+        // 只有非买断用户（LTD）才设置额度重置逻辑，防止覆盖掉买断用户的特殊权益
+        if (plan.name !== "Lifetime Deal") {
+          user.planType = "stripe_monthly";
+          user.credits = STRIPE_MONTHLY_CREDITS;
+          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        } else {
+          // 如果是买断用户，设置特殊类型
+          user.planType = "lifetime";
+          user.credits = STRIPE_MONTHLY_CREDITS;
+          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+          user.creditsResetDate = new Date(new Date().setFullYear(new Date().getFullYear() + 10)); // 买断有效期极长
+        }
         // ========================================================
 
         await user.save();
@@ -118,12 +128,15 @@ export async function POST(req: NextRequest) {
 
         if (user) {
           // ================= [ 新增：取消订阅降级逻辑 ] =================
-          user.hasAccess = false;
-          user.planType = "free";
-          user.credits = 3;
-          user.monthlyCreditLimit = 3;
-          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-          await user.save();
+          // 只有订阅用户才降级，买断用户不受影响
+          if (user.planType !== "lifetime") {
+            user.hasAccess = false;
+            user.planType = "free";
+            user.credits = 3;
+            user.monthlyCreditLimit = 3;
+            user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            await user.save();
+          }
           // =========================================================
         }
         break;
@@ -146,13 +159,16 @@ export async function POST(req: NextRequest) {
           if (user.priceId !== priceId) break;
 
           // ================= [ 新增：每月按期续费充值逻辑 ] =================
-          user.hasAccess = true;
-          const STRIPE_MONTHLY_CREDITS = 1000;
-          user.planType = "stripe_monthly";
-          user.credits = STRIPE_MONTHLY_CREDITS;
-          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
-          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-          await user.save();
+          // 只有非买断用户才执行重置逻辑
+          if (user.planType !== "lifetime") {
+            user.hasAccess = true;
+            const STRIPE_MONTHLY_CREDITS = 250;
+            user.planType = "stripe_monthly";
+            user.credits = STRIPE_MONTHLY_CREDITS;
+            user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+            user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            await user.save();
+          }
           // ============================================================
         }
         break;
