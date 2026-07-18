@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import apiClient from "@/libs/api"; // 👈 引入我们配置好的超级客户端
+import { useRouter } from "next/navigation"; // 👈 新增引入路由
+import apiClient from "@/libs/api";
 
 export default function TechSellerTool() {
+    const router = useRouter(); // 👈 初始化 router
+
     const [formData, setFormData] = useState({
         productName: "",
         specs: "",
@@ -15,7 +18,10 @@ export default function TechSellerTool() {
     const [result, setResult] = useState<any>(null);
     const [historyList, setHistoryList] = useState<any[]>([]);
 
-    // 💡 定义滚动锚点
+    // ================= [ 💡 新增：额度状态 ] =================
+    const [credits, setCredits] = useState<number | null>(null);
+    const [planType, setPlanType] = useState<string>("free");
+
     const canvasRef = useRef<HTMLDivElement>(null);
 
     // 1. 初始化拉取历史记录 
@@ -30,11 +36,26 @@ export default function TechSellerTool() {
         }
     };
 
+    // ================= [ 💡 新增：拉取当前用户的额度 ] =================
+    const fetchCredits = async () => {
+        try {
+            const res = await fetch("/api/user/credits");
+            const data = await res.json();
+            if (data.success) {
+                setCredits(data.credits);
+                setPlanType(data.planType);
+            }
+        } catch (e) {
+            console.error("Failed to fetch credits", e);
+        }
+    };
+
     useEffect(() => {
         fetchHistory();
+        fetchCredits(); // 页面加载时拉取额度
     }, []);
 
-    // 💡 监听 result 变化，自动平滑滚动到结果面板
+    // 监听 result 变化，自动平滑滚动到结果面板
     useEffect(() => {
         if (result && canvasRef.current) {
             setTimeout(() => {
@@ -63,6 +84,11 @@ export default function TechSellerTool() {
             if (data.success) {
                 setResult(data.data);
                 fetchHistory();
+                // ================= [ 💡 新增：生成成功后，前端数字自动扣减，体验极致顺滑 ] =================
+                setCredits((prev) => (prev !== null ? prev - 1 : null));
+            } else {
+                // 如果后端返回额度不足等错误，直接弹出警告
+                alert(data.error || "Generation failed.");
             }
         } catch (err) {
             console.error("Generation logic failed", err);
@@ -86,18 +112,16 @@ export default function TechSellerTool() {
         }
     };
 
-    // 💡 新增：4. 删除单条历史记录
+    // 4. 删除单条历史记录
     const handleDeleteHistory = async (e: React.MouseEvent, id: string) => {
-        e.stopPropagation(); // 🛡️ 核心防御：阻止事件冒泡，防止触发外层的 loadHistoryItem
+        e.stopPropagation();
 
         const isConfirmed = window.confirm("Are you sure you want to delete this record?");
         if (!isConfirmed) return;
 
         try {
-            // 调用后端的 DELETE 接口
             const data = (await apiClient.delete(`/history?id=${id}`)) as any;
             if (data?.success) {
-                // 删除成功后，无感刷新本地状态，不需要重新请求整个列表
                 setHistoryList((prev) => prev.filter((item) => item._id !== id));
             }
         } catch (err) {
@@ -254,13 +278,42 @@ export default function TechSellerTool() {
                             </select>
                         </div>
 
+                        {/* ================= [ 💡 新增：额度指示器 UI ] ================= */}
+                        {credits !== null && (
+                            <div className="mt-4 flex items-center justify-between bg-base-100 border border-base-300 rounded-xl p-3 shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">⚡️</span>
+                                    <span className="text-sm font-medium text-base-content">
+                                        Credits: <strong className={credits <= 1 ? "text-error" : "text-base-content"}>{credits}</strong>
+                                    </span>
+                                    {planType === "free" && (
+                                        <span className="ml-2 text-xs bg-base-200 text-base-content/70 px-2 py-0.5 rounded-full font-semibold">Free</span>
+                                    )}
+                                </div>
+
+                                {(credits <= 1 || planType === "free") && (
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push("/#pricing")}
+                                        className="text-sm font-bold text-primary hover:text-primary-focus transition-colors"
+                                    >
+                                        Upgrade 🚀
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                        {/* ========================================================= */}
+
                         <button
                             type="submit"
-                            className="btn btn-primary w-full mt-4 rounded-xl border-none shadow-[0_4px_12px_transparent] hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 text-white font-bold text-lg h-14"
-                            disabled={isLoading}
+                            // 💡 新增防呆：如果没有额度了，强行禁用按钮，防止白白发起请求
+                            disabled={isLoading || (credits !== null && credits <= 0)}
+                            className="btn btn-primary w-full mt-2 rounded-xl border-none shadow-[0_4px_12px_transparent] hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 text-white font-bold text-lg h-14 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
                                 <span className="loading loading-spinner loading-md"></span>
+                            ) : credits !== null && credits <= 0 ? (
+                                "No Credits Left 🚫"
                             ) : (
                                 "Generate Marketing Assets 🚀"
                             )}
@@ -283,7 +336,7 @@ export default function TechSellerTool() {
                             <svg className="w-16 h-16 mb-4 opacity-30 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                             </svg>
-                            <p className="text-sm">Enter specs on the left to activate the 10-year tech selection engine.</p>
+                            <p className="text-sm">Enter specs on the left to activate the tech selection engine.</p>
                         </div>
                     )}
 
@@ -357,7 +410,6 @@ export default function TechSellerTool() {
                                         <h3 className="font-bold text-sm text-base-content line-clamp-1 group-hover:text-primary transition-colors pr-2">
                                             {item.productName}
                                         </h3>
-                                        {/* 💡 新增：删除按钮，使用 opacity-0 控制只在 hover 时显示以保持页面整洁 */}
                                         <button
                                             onClick={(e) => handleDeleteHistory(e, item._id)}
                                             className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-base-content/30 hover:text-error hover:bg-error/10 rounded-lg shrink-0"
