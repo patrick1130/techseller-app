@@ -16,7 +16,8 @@ export const sendOpenAi = async (
   console.log('📡 Spawning GPT Request on:', url);
 
   const body = {
-    model: "meta-llama/llama-3.1-70b-instruct",
+    model: "openai/gpt-4o-mini",
+    //meta-llama/llama-3.1-8b-instruct,deepseek/deepseek-chat
     messages,
     max_tokens: max,
     response_format: { type: "json_object" },
