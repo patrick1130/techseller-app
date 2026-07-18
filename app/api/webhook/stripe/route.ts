@@ -5,12 +5,13 @@ import connectMongo from "@/libs/mongoose";
 import configFile from "@/config";
 import User from "@/models/User";
 import { findCheckoutSession } from "@/libs/stripe";
+
 const UserModel = User as any;
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2023-08-16",
   typescript: true,
 });
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 // This is where we receive Stripe webhook events
 // It's used to update user data, send emails, etc...
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.text();
 
-  const signature = (await headers()).get("stripe-signature");
+  const signature = (await headers()).get("stripe-signature") as string;
 
   let eventType;
   let event;
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   // verify Stripe event is legit
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-  } catch (err) {
+  } catch (err: any) {
     console.error(`Webhook signature verification failed. ${err.message}`);
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
         const customerId = session?.customer;
         const priceId = session?.line_items?.data[0]?.price.id;
         const userId = stripeObject.client_reference_id;
-        const plan = configFile.stripe.plans.find((p) => p.priceId === priceId);
+        const plan = configFile.stripe.plans.find((p: any) => p.priceId === priceId);
 
         if (!plan) break;
 
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
           .object as Stripe.Invoice;
 
         const priceId = stripeObject.lines.data[0].price.id;
-        const customerId = stripeObject.customer;
+        const customerId = stripeObject.customer as string;
 
         const user = await UserModel.findOne({ customerId });
 
@@ -180,7 +181,7 @@ export async function POST(req: NextRequest) {
       default:
       // Unhandled event type
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error("stripe error: ", e.message);
   }
 

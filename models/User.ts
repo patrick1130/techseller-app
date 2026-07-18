@@ -22,7 +22,15 @@ const userSchema = new mongoose.Schema(
     // 标记用户的套餐类型，区分白嫖、官网订阅、还是 AppSumo 终身买断
     planType: {
       type: String,
-      enum: ["free", "stripe_monthly", "stripe_yearly", "appsumo_tier1", "appsumo_tier2", "appsumo_tier3"],
+      enum: [
+        "free",
+        "stripe_monthly",
+        "stripe_yearly",
+        "appsumo_tier1",
+        "appsumo_tier2",
+        "appsumo_tier3",
+        "lifetime"
+      ],
       default: "free",
     },
     // 当前剩余可用生成额度
@@ -60,6 +68,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    apiKey: {
+      type: String,
+      default: null
+    }, // 存储用户的 OpenAI API Key
+    useOwnApiKey: {
+      type: Boolean,
+      default: false
+    }, // 用户是否选择使用自己的 Key
   },
   {
     timestamps: true,

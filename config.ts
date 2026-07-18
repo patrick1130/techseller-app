@@ -53,13 +53,14 @@ const config = {
             ? "price_1TuToqFzQjhWVsGONYQ8V4Ob"
             : "price_填入你的_线上真实ID",
         name: "Lifetime Deal",
-        description: "Pay once. 10x your conversions forever.",
+        description: "Pay once. Unlimited usage with your own API Key.",
         price: 59,
         priceAnchor: 199,
+        isOwnKeyAllowed: true, // 👈 核心修改：允许使用自带 Key
         features: [
+          { name: "Unlimited generations (Own API Key)" },
           { name: "Everything in Pro Monthly" },
-          { name: "Pay once, use forever" },
-          { name: "Early access to new features" },
+          { name: "Pay once, forever access" },
           { name: "24/7 Priority support" },
         ],
       },
