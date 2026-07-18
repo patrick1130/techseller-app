@@ -50,7 +50,7 @@ export default function TechSellerTool() {
 
         try {
             // apiClient 自动设置 Content-Type，自动 stringify body，代码极简！
-            const data = (await apiClient.post("/gpt", formData)) as any;;
+            const data = (await apiClient.post("/gpt", formData)) as any;
 
             if (data.success) {
                 setResult(data.data);
@@ -116,10 +116,10 @@ export default function TechSellerTool() {
 
                         return (
                             <li key={index} className="text-sm text-base-content/90 leading-relaxed">
-                                <div className="bg-base-100 p-3 rounded-lg border border-base-300">
+                                <div className="bg-base-100 p-4 rounded-xl border border-base-200/60 shadow-sm">
                                     <span className="mr-2">{emoji}</span>
                                     {title && <strong className="text-primary">{title}</strong>}
-                                    <p className="mt-1 text-base-content/80 text-xs">
+                                    <p className="mt-2 text-base-content/80 text-xs leading-relaxed">
                                         {/* 只有在极端异常时，才会走最后的 JSON.stringify */}
                                         {desc || JSON.stringify(item)}
                                     </p>
@@ -134,10 +134,10 @@ export default function TechSellerTool() {
         if (typeof content === "object") {
             const { title, desc, emoji } = extractTitleAndDesc(content);
             return (
-                <div className="bg-base-100 p-3 rounded-lg border border-base-300">
+                <div className="bg-base-100 p-4 rounded-xl border border-base-200/60 shadow-sm">
                     <span className="mr-2">{emoji}</span>
                     {title && <strong className="text-primary">{title}</strong>}
-                    <p className="mt-1 text-base-content/80 text-xs">{desc || JSON.stringify(content)}</p>
+                    <p className="mt-2 text-base-content/80 text-xs leading-relaxed">{desc || JSON.stringify(content)}</p>
                 </div>
             );
         }
@@ -168,30 +168,31 @@ export default function TechSellerTool() {
         <div className="space-y-8 mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* 👈 Left Panel: Input Form */}
-                <div className="lg:col-span-5 bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm h-fit">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-base-content">
-                        🛠️ Product Spec Input
+                <div className="lg:col-span-5 bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 h-fit">
+                    <h2 className="text-2xl font-extrabold mb-8 flex items-center gap-3 text-base-content tracking-tight">
+                        <span className="bg-primary/10 p-2 rounded-xl text-primary">🛠️</span>
+                        Product Spec Input
                     </h2>
-                    <form onSubmit={handleGenerate} className="space-y-5">
+                    <form onSubmit={handleGenerate} className="space-y-6">
                         <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold text-base-content/80">Product Name</span>
+                            <label className="label mb-1 p-0">
+                                <span className="label-text font-medium text-base-content/70 tracking-wide text-xs uppercase">Product Name</span>
                             </label>
                             <input
                                 type="text"
                                 placeholder="e.g. VoltaCharge 140W GaN Charger"
-                                className="input input-bordered w-full focus:input-primary"
+                                className="input input-bordered w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
                                 value={formData.productName}
                                 onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
                             />
                         </div>
 
                         <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold text-base-content/80">Technical Specifications</span>
+                            <label className="label mb-1 p-0">
+                                <span className="label-text font-medium text-base-content/70 tracking-wide text-xs uppercase">Technical Specifications</span>
                             </label>
                             <textarea
-                                className="textarea textarea-bordered h-28 focus:textarea-primary"
+                                className="textarea textarea-bordered h-32 w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 leading-relaxed"
                                 placeholder="e.g. - 140W Max Output&#10;- 2 x USB-C + 1 x USB-A&#10;- 30% smaller than standard charger"
                                 value={formData.specs}
                                 onChange={(e) => setFormData({ ...formData, specs: e.target.value })}
@@ -199,11 +200,11 @@ export default function TechSellerTool() {
                         </div>
 
                         <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold text-base-content/80">Target Audience</span>
+                            <label className="label mb-1 p-0">
+                                <span className="label-text font-medium text-base-content/70 tracking-wide text-xs uppercase">Target Audience</span>
                             </label>
                             <select
-                                className="select select-bordered focus:select-primary"
+                                className="select select-bordered w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
                                 value={formData.audience}
                                 onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
                             >
@@ -215,11 +216,11 @@ export default function TechSellerTool() {
                         </div>
 
                         <div className="form-control">
-                            <label className="label">
-                                <span className="label-text font-semibold text-base-content/80">Brand Tone of Voice</span>
+                            <label className="label mb-1 p-0">
+                                <span className="label-text font-medium text-base-content/70 tracking-wide text-xs uppercase">Brand Tone of Voice</span>
                             </label>
                             <select
-                                className="select select-bordered focus:select-primary"
+                                className="select select-bordered w-full bg-base-100 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
                                 value={formData.tone}
                                 onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
                             >
@@ -232,11 +233,11 @@ export default function TechSellerTool() {
 
                         <button
                             type="submit"
-                            className="btn btn-primary w-full shadow-md text-white font-bold"
+                            className="btn btn-primary w-full mt-4 rounded-xl border-none shadow-[0_4px_12px_transparent] hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 text-white font-bold text-lg h-14"
                             disabled={isLoading}
                         >
                             {isLoading ? (
-                                <span className="loading loading-spinner loading-sm"></span>
+                                <span className="loading loading-spinner loading-md"></span>
                             ) : (
                                 "Generate Marketing Assets 🚀"
                             )}
@@ -245,9 +246,10 @@ export default function TechSellerTool() {
                 </div>
 
                 {/* 👉 Right Panel: Output Canvas */}
-                <div className="lg:col-span-7 bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm min-h-[500px] flex flex-col">
-                    <h2 className="text-xl font-bold mb-6 text-base-content flex items-center gap-2">
-                        ✨ Marketing Asset Board
+                <div className="lg:col-span-7 bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[500px] flex flex-col">
+                    <h2 className="text-2xl font-extrabold mb-8 text-base-content tracking-tight flex items-center gap-3">
+                        <span className="bg-primary/10 p-2 rounded-xl text-primary">✨</span>
+                        Marketing Asset Board
                     </h2>
 
                     {!isLoading && !result && (
@@ -269,36 +271,36 @@ export default function TechSellerTool() {
                     {result && !isLoading && (
                         <div className="space-y-6 animate-fadeIn">
                             {/* 1. Hook */}
-                            <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 relative group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-sm text-primary">📍 Pain-Point Intro (Hook)</h3>
+                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-sm tracking-tight text-primary">📍 Pain-Point Intro (Hook)</h3>
                                     <button onClick={() => copyToClipboard(result.hook)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
                                 </div>
                                 {renderContent(result.hook)}
                             </div>
 
                             {/* 2. Bullets */}
-                            <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 relative group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-sm text-primary">🎯 Amazon / Temu Listing Style (Bullet Points)</h3>
+                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-sm tracking-tight text-primary">🎯 Amazon / Temu Listing Style (Bullet Points)</h3>
                                     <button onClick={() => copyToClipboard(result.bullets)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
                                 </div>
                                 {renderContent(result.bullets)}
                             </div>
 
                             {/* 3. FAQ */}
-                            <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 relative group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-sm text-primary">💬 Conversion-Boosting FAQs</h3>
+                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-sm tracking-tight text-primary">💬 Conversion-Boosting FAQs</h3>
                                     <button onClick={() => copyToClipboard(result.faq)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
                                 </div>
                                 {renderContent(result.faq)}
                             </div>
 
                             {/* 4. Reddit */}
-                            <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 relative group">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-sm text-primary">🔥 Reddit / Forum Seed Copy (Social Post)</h3>
+                            <div className="bg-base-200/50 p-6 rounded-xl border border-base-200/60 relative group transition-colors hover:border-base-300">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-bold text-sm tracking-tight text-primary">🔥 Reddit / Forum Seed Copy (Social Post)</h3>
                                     <button onClick={() => copyToClipboard(result.socialPost)} className="btn btn-xs btn-outline btn-primary opacity-80 lg:opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
                                 </div>
                                 {renderContent(result.socialPost)}
@@ -309,19 +311,20 @@ export default function TechSellerTool() {
             </div>
 
             {/* 👇 Bottom Panel: History Records */}
-            <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm w-full">
-                <h2 className="text-xl font-bold mb-4 text-base-content flex items-center gap-2">
-                    🕒 History Records ({historyList.length}/30)
+            <div className="bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 w-full">
+                <h2 className="text-2xl font-extrabold mb-6 text-base-content tracking-tight flex items-center gap-3">
+                    <span className="bg-primary/10 p-2 rounded-xl text-primary">🕒</span>
+                    History Records ({historyList.length}/30)
                 </h2>
                 {historyList.length === 0 ? (
                     <p className="text-sm text-base-content/40">No records found. Generated assets will appear here.</p>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {historyList.map((item) => (
                             <div
                                 key={item._id}
                                 onClick={() => loadHistoryItem(item)}
-                                className="bg-base-200/40 p-4 rounded-xl border border-base-300 hover:border-primary cursor-pointer hover:shadow-sm transition-all group flex flex-col justify-between"
+                                className="bg-base-200/40 p-5 rounded-xl border border-base-200/60 hover:border-primary/50 cursor-pointer hover:bg-base-200/80 hover:shadow-sm transition-all duration-300 group flex flex-col justify-between"
                             >
                                 <div>
                                     <div className="flex justify-between items-start mb-2">
@@ -329,13 +332,13 @@ export default function TechSellerTool() {
                                             {item.productName}
                                         </h3>
                                     </div>
-                                    <p className="text-xs text-base-content/60 line-clamp-2 mb-3">
+                                    <p className="text-xs text-base-content/60 line-clamp-2 mb-4 leading-relaxed">
                                         {item.specs}
                                     </p>
                                 </div>
-                                <div className="flex justify-between items-center text-[10px] text-base-content/40 pt-2 border-t border-base-300/50">
-                                    <span>Audience: {item.audience}</span>
-                                    <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                                <div className="flex justify-between items-center text-[10px] text-base-content/40 pt-3 border-t border-base-200/80">
+                                    <span className="truncate mr-2">Audience: {item.audience}</span>
+                                    <span className="whitespace-nowrap">{new Date(item.createdAt).toLocaleDateString()}</span>
                                 </div>
                             </div>
                         ))}
