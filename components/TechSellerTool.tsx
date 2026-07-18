@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import apiClient from "@/libs/api"; // 👈 引入我们配置好的超级客户端
 
 export default function TechSellerTool() {
@@ -14,6 +14,9 @@ export default function TechSellerTool() {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
     const [historyList, setHistoryList] = useState<any[]>([]);
+
+    // 💡 新增：定义滚动锚点
+    const canvasRef = useRef<HTMLDivElement>(null);
 
     // 1. 初始化拉取历史记录 (使用 apiClient 重构)
     const fetchHistory = async () => {
@@ -32,6 +35,16 @@ export default function TechSellerTool() {
     useEffect(() => {
         fetchHistory();
     }, []);
+
+    // 💡 新增：监听 result 变化，自动平滑滚动到结果面板
+    useEffect(() => {
+        if (result && canvasRef.current) {
+            // 给一个小延迟，确保 DOM 已经完全渲染并展开
+            setTimeout(() => {
+                canvasRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 100);
+        }
+    }, [result]);
 
     // 2. 生成文案 (使用 apiClient 重构)
     const handleGenerate = async (e: React.FormEvent) => {
@@ -75,6 +88,11 @@ export default function TechSellerTool() {
             tone: item.tone,
         });
         setResult(item.result);
+
+        // 💡 新增：点击历史记录后，也自动滚回结果区
+        if (canvasRef.current) {
+            canvasRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     };
 
     const renderContent = (content: any) => {
@@ -246,7 +264,11 @@ export default function TechSellerTool() {
                 </div>
 
                 {/* 👉 Right Panel: Output Canvas */}
-                <div className="lg:col-span-7 bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[500px] flex flex-col">
+                {/* 💡 新增：加入 ref 绑定和 scroll-mt-8 预留顶部间距 */}
+                <div
+                    ref={canvasRef}
+                    className="scroll-mt-8 lg:col-span-7 bg-base-100 p-8 rounded-[24px] border border-base-200/60 shadow-sm hover:shadow-md transition-shadow duration-300 min-h-[500px] flex flex-col"
+                >
                     <h2 className="text-2xl font-extrabold mb-8 text-base-content tracking-tight flex items-center gap-3">
                         <span className="bg-primary/10 p-2 rounded-xl text-primary">✨</span>
                         Marketing Asset Board
