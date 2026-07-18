@@ -34,7 +34,12 @@ export async function POST(req: Request) {
         // ================= [ 3. 核心业务：调用 Service 层 ] =================
         let parsedData;
         try {
-            parsedData = await generateMarketingCopy(body);
+            // 👈 补充：将 userId 注入到 params 中透传给 Engine
+            const engineParams = {
+                ...body,
+                userId: session?.user?.id || session?.user?.email
+            };
+            parsedData = await generateMarketingCopy(engineParams);
         } catch (err) {
             console.error("🚨 AI Generation or Parsing Failed:", err);
             return NextResponse.json(

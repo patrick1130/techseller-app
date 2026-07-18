@@ -5,10 +5,11 @@ interface CopyEngineParams {
     specs: string;
     audience: string;
     tone: string;
+    userId?: string; // 👈 增加 userId 透传
 }
 
 export async function generateMarketingCopy(params: CopyEngineParams) {
-    const { productName, specs, audience, tone } = params;
+    const { productName, specs, audience, tone, userId = "system-engine" } = params;
 
     const systemPrompt = `
     You are an elite e-commerce copywriting expert with 10 years of experience writing high-converting listings for platforms like Amazon, Temu, and Shopify in the North American market.
@@ -27,7 +28,13 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
     Required JSON Structure:
     {
       "hook": "1 short, high-impact emotional hook / pain-point introduction. (50-80 words)",
-      "bullets": "5 high-converting, scenario-based Bullet Points. Format: '[Emoji] [BOLD CAPITAL KEYWORD]: Description'.",
+      "bullets": [
+        "🚀 **[KEYWORD 1]**: 1st high-converting, scenario-based bullet point description",
+        "🛡️ **[KEYWORD 2]**: 2nd bullet point...",
+        "⚡ **[KEYWORD 3]**: 3rd bullet point...",
+        "💡 **[KEYWORD 4]**: 4th bullet point...",
+        "💼 **[KEYWORD 5]**: 5th bullet point..."
+      ],
       "faq": [
         {
           "question": "1st professional FAQ question here",
@@ -38,14 +45,14 @@ export async function generateMarketingCopy(params: CopyEngineParams) {
     }
     `;
 
-    // 调用底层 GPT 封装
+    // 👈 核心修复：透传 userId，并且将 token 放大到 3000
     const aiResponse = await sendOpenAi(
         [
             { role: "system", content: "You are an expert e-commerce copywriter. You must always reply in strict, valid JSON format in English." },
             { role: "user", content: systemPrompt }
         ],
-        "system-engine", // userId 占位
-        1500,
+        userId,
+        3000,
         0.7
     );
 
