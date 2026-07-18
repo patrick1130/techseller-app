@@ -84,22 +84,21 @@ export async function POST(req: NextRequest) {
         user.customerId = customerId;
         user.hasAccess = true; // 保留向下兼容
 
-        // ================= [ 新增：首次付款充值逻辑 ] =================
+        // ================= [ 修复：首次付款充值逻辑 ] =================
         const STRIPE_MONTHLY_CREDITS = 250;
 
-        // 只有非买断用户（LTD）才设置额度重置逻辑，防止覆盖掉买断用户的特殊权益
+        // 判定用户套餐类型
         if (plan.name !== "Lifetime Deal") {
           user.planType = "stripe_monthly";
-          user.credits = STRIPE_MONTHLY_CREDITS;
-          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
-          user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         } else {
-          // 如果是买断用户，设置特殊类型
           user.planType = "lifetime";
-          user.credits = STRIPE_MONTHLY_CREDITS;
-          user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
-          user.creditsResetDate = new Date(new Date().setFullYear(new Date().getFullYear() + 10)); // 买断有效期极长
         }
+
+        // 核心修复：无论是月付还是买断，基础额度都设为 250，且享受每 30 天重置的待遇
+        // 买断用户的“无限额度”由 API Key 逻辑控制，此处提供保底的 250 次/月
+        user.credits = STRIPE_MONTHLY_CREDITS;
+        user.monthlyCreditLimit = STRIPE_MONTHLY_CREDITS;
+        user.creditsResetDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         // ========================================================
 
         await user.save();
@@ -160,7 +159,7 @@ export async function POST(req: NextRequest) {
           if (user.priceId !== priceId) break;
 
           // ================= [ 新增：每月按期续费充值逻辑 ] =================
-          // 只有非买断用户才执行重置逻辑
+          // 只有非买断用户才执行重置逻辑（买断用户没有后续的 invoice.paid 事件）
           if (user.planType !== "lifetime") {
             user.hasAccess = true;
             const STRIPE_MONTHLY_CREDITS = 250;

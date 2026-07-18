@@ -23,12 +23,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
-        // ================= [ 2. 核心：分流逻辑 ] =================
-        // 如果用户选择了使用自己的 Key，则跳过额度检查和扣除
+        // ================= [ 2. 核心：分流与额度逻辑 ] =================
         const useOwnKey = currentUser.useOwnApiKey && currentUser.apiKey;
 
+        // 定义是否为高级用户 (非 free 套餐)
+        const isPremium = currentUser.planType !== "free";
+
         if (!useOwnKey) {
-            // 原有的额度检查逻辑
             const now = new Date();
             if (currentUser.creditsResetDate && now > currentUser.creditsResetDate) {
                 currentUser.credits = currentUser.monthlyCreditLimit;
@@ -46,20 +47,34 @@ export async function POST(req: Request) {
 
         // 3. 参数校验
         const body = await req.json();
-        const { productName, specs } = body;
+        const { productName, specs, includeFaq, includeReddit } = body;
+
         if (!productName || !specs) {
             return NextResponse.json({ success: false, error: "Product Name and Specs are required!" }, { status: 400 });
         }
 
-        // 4. 生成文案 (传入 userApiKey 给你的 service)
+        // ================= [ 解决过度承诺 1：功能越权拦截 ] =================
+        // 如果前端请求了高级模块（FAQ 或 Reddit），但用户是免费版，直接在 API 层拦截
+        if (!isPremium && (includeFaq || includeReddit)) {
+            return NextResponse.json(
+                { success: false, error: "FAQ and Reddit generation are available for Pro users only. Please upgrade." },
+                { status: 403 }
+            );
+        }
+        // =================================================================
+
+        // 4. 生成文案 (将权限状态下发给底层 Service)
         let parsedData;
         try {
             const engineParams = {
                 ...body,
                 userId: session.user.id,
-                // 将用户的 Key 传给生成引擎，引擎内需要根据是否有 key 使用不同的 client
-                userApiKey: useOwnKey ? currentUser.apiKey : null
+                userApiKey: useOwnKey ? currentUser.apiKey : null,
+                // 下发高级状态，用于底层引擎切换 Prompt 和 模型
+                isPremium,
+                planType: currentUser.planType
             };
+
             parsedData = await generateMarketingCopy(engineParams);
         } catch (err) {
             console.error("🚨 AI Generation Failed:", err);
@@ -77,7 +92,15 @@ export async function POST(req: Request) {
             await HistoryModel.create({
                 userId: session.user.id, productName, specs, result: parsedData,
             });
-            // 保持 30 条限制的逻辑不变...
+
+            const userHistoryCount = await HistoryModel.countDocuments({ userId: session.user.id });
+            if (userHistoryCount > 30) {
+                const oldestRecords = await HistoryModel.find({ userId: session.user.id })
+                    .sort({ createdAt: 1 })
+                    .limit(userHistoryCount - 30);
+                const idsToDelete = oldestRecords.map((doc: any) => doc._id);
+                await HistoryModel.deleteMany({ _id: { $in: idsToDelete } });
+            }
         } catch (dbError) {
             console.error("💾 DB Save error:", dbError);
         }
