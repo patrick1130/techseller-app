@@ -5,7 +5,7 @@ import connectMongo from "@/libs/mongoose";
 import configFile from "@/config";
 import User from "@/models/User";
 import { findCheckoutSession } from "@/libs/stripe";
-
+const UserModel = User as any;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-08-16",
   typescript: true,
@@ -61,12 +61,12 @@ export async function POST(req: NextRequest) {
 
         // Get or create the user. userId is normally passed in the checkout session (clientReferenceID) to identify the user when we get the webhook event
         if (userId) {
-          user = await User.findById(userId);
+          user = await UserModel.findById(userId);
         } else if (customer.email) {
-          user = await User.findOne({ email: customer.email });
+          user = await UserModel.findOne({ email: customer.email });
 
           if (!user) {
-            user = await User.create({
+            user = await UserModel.create({
               email: customer.email,
               name: customer.name,
             });
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
         const subscription = await stripe.subscriptions.retrieve(
           stripeObject.id
         );
-        const user = await User.findOne({ customerId: subscription.customer });
+        const user = await UserModel.findOne({ customerId: subscription.customer });
 
         // Revoke access to your product
         user.hasAccess = false;
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         const priceId = stripeObject.lines.data[0].price.id;
         const customerId = stripeObject.customer;
 
-        const user = await User.findOne({ customerId });
+        const user = await UserModel.findOne({ customerId });
 
         // Make sure the invoice is for the same plan (priceId) the user subscribed to
         if (user.priceId !== priceId) break;
