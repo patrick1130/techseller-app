@@ -50,3 +50,41 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+// 💡 新增：处理前端发送的删除单条记录请求
+export async function DELETE(req: Request) {
+    try {
+        // 1. 验证用户登录状态
+        const session = await auth();
+        const userId = session?.user?.id || session?.user?.email;
+
+        if (!userId) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        // 2. 获取 URL 参数中的 id
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get("id");
+
+        if (!id) {
+            return NextResponse.json({ success: false, error: "History ID is required" }, { status: 400 });
+        }
+
+        await connectMongo(); // 建立 Mongoose 业务连接
+
+        // 3. 🛡️ 核心防御：同时匹配 _id 和 userId，确保用户只能删除自己的数据
+        const deletedItem = await HistoryModel.findOneAndDelete({
+            _id: id,
+            userId: userId
+        });
+
+        if (!deletedItem) {
+            return NextResponse.json({ success: false, error: "Record not found or not authorized to delete" }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, message: "History deleted successfully" });
+    } catch (error: any) {
+        console.error("DELETE History Error:", error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
